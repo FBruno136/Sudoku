@@ -1,10 +1,11 @@
-// Gera uma solução completa para um tabuleiro de Sudoku
 function generateSudokuSolution() {
     const board = Array(9)
         .fill(null)
         .map(() => Array(9).fill(0));
 
-    // Verifica se um número pode ser colocado em uma célula específica
+    let attemptCount = 0;
+    const MAX_ATTEMPTS = 10000;
+
     function isValid(board, row, col, num) {
         for (let i = 0; i < 9; i++) {
             if (board[row][i] === num || board[i][col] === num) return false;
@@ -18,7 +19,6 @@ function generateSudokuSolution() {
         return true;
     }
 
-    // Resolve o tabuleiro de Sudoku
     function solve(board) {
         for (let row = 0; row < 9; row++) {
             for (let col = 0; col < 9; col++) {
@@ -26,6 +26,8 @@ function generateSudokuSolution() {
                     for (let num = 1; num <= 9; num++) {
                         if (isValid(board, row, col, num)) {
                             board[row][col] = num;
+                            attemptCount++;
+                            if (attemptCount > MAX_ATTEMPTS) throw new Error("Número máximo de tentativas excedido.");
                             if (solve(board)) return true;
                             board[row][col] = 0;
                         }
@@ -41,18 +43,17 @@ function generateSudokuSolution() {
     return board;
 }
 
-// Remove números do tabuleiro com base na dificuldade
 function removeNumbers(board, difficulty) {
     let cellsToRemove;
     switch (difficulty) {
         case "easy":
-            cellsToRemove = 20; // Poucas células vazias
+            cellsToRemove = 20;
             break;
         case "medium":
-            cellsToRemove = 40; // Moderado número de células vazias
+            cellsToRemove = 40;
             break;
         case "hard":
-            cellsToRemove = 60; // Muitas células vazias
+            cellsToRemove = 60;
             break;
         default:
             cellsToRemove = 20;
@@ -61,25 +62,27 @@ function removeNumbers(board, difficulty) {
     while (cellsToRemove > 0) {
         const row = Math.floor(Math.random() * 9);
         const col = Math.floor(Math.random() * 9);
+
         if (board[row][col] !== 0) {
+            const temp = board[row][col];
             board[row][col] = 0;
             cellsToRemove--;
         }
     }
+
     return board;
 }
 
-// Valida o tabuleiro para verificar se a solução está correta
 function validateBoard(board, solution) {
     for (let row = 0; row < 9; row++) {
         for (let col = 0; col < 9; col++) {
             if (board[row][col] !== 0 && board[row][col] !== solution[row][col]) {
-                return false; // Número incorreto
+                console.error(`Erro na célula (${row}, ${col}): esperado ${solution[row][col]}, mas encontrado ${board[row][col]}`);
+                return false;
             }
         }
     }
-    return true; // Todos os números estão corretos
+    return true;
 }
 
-// Exporta as funções principais
 export { generateSudokuSolution, removeNumbers, validateBoard };

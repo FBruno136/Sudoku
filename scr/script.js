@@ -1,9 +1,11 @@
 import { generateSudokuSolution, removeNumbers, validateBoard } from "./logic.js";
+import { verificarSolucao } from "./solucion.js";
 
 // 1. Variáveis Globais
 let board = [];
 let solution = [];
 let jogoIniciado = false;
+let solucaoCorreta = [];
 
 // Inicialização do jogo ao carregar a página
 document.addEventListener("DOMContentLoaded", () => {
@@ -30,50 +32,94 @@ function initGame() {
 
     // Gera solução e quebra-cabeça baseado na dificuldade
     solution = generateSudokuSolution();
+    console.log("Solução gerada:", solution);
+    solucaoCorreta = solution;
+    const tabuleiroIncompleto = removeNumbers(JSON.parse(JSON.stringify(solucaoCorreta)), difficulty);
     board = removeNumbers(JSON.parse(JSON.stringify(solution)), difficulty);
 
-    renderBoard();
+
+    renderBoard(tabuleiroIncompleto);
     addEventListeners();
+    console.log("Jogo iniciado com a dificuldade: ", difficulty);
+}
+
+document.getElementById("verifyButton").addEventListener("click", () => {
+    verificarTabuleiro();
+});
+
+function verificarTabuleiro() {
+    const tabuleiroUsuario = lerTabuleiroUsuario(); // Obtém o tabuleiro preenchido pelo usuário
+    const resultado = verificarSolucao(tabuleiroUsuario, solucaoCorreta);
+
+    aplicarCoresResultado(resultado);
+    console.log("Tabuleiro verificado com sucesso!");
+}
+
+function lerTabuleiroUsuario() {
+    const tabuleiro = [];
+    const inputs = document.querySelectorAll("#sudoku-board input");
+
+    inputs.forEach((input, index) => {
+        const row = Math.floor(index / 9);
+        const col = index % 9;
+
+        if (!tabuleiro[row]) tabuleiro[row] = [];
+        tabuleiro[row][col] = input.value ? parseInt(input.value, 10) : 0;
+    });
+
+    return tabuleiro;
+}
+
+function aplicarCoresResultado(resultado) {
+    const inputs = document.querySelectorAll("#sudoku-board input");
+
+    inputs.forEach((input, index) => {
+        const row = Math.floor(index / 9);
+        const col = index % 9;
+
+        if (resultado[row][col]) {
+            input.style.backgroundColor = "lightgreen"; // Cor correta
+        } else {
+            input.style.backgroundColor = "lightcoral"; // Cor incorreta
+        }
+    });
 }
 
 // 3. Renderizar Tabuleiro na Tela
-function renderBoard() {
+function renderBoard(tabuleiro) {
     const container = document.getElementById("sudoku-board");
-    container.innerHTML = ""; // Limpa o tabuleiro anterior
+    container.innerHTML = "";
 
-    // Configura estilo do tabuleiro
     container.style.display = "grid";
     container.style.gridTemplateColumns = "repeat(9, 1fr)";
     container.style.gridGap = "2px";
 
-    // Criar células do tabuleiro
-    board.forEach((row, rowIndex) => {
+    tabuleiro.forEach((row, rowIndex) => {
         row.forEach((cell, colIndex) => {
             const cellElement = document.createElement("input");
             cellElement.type = "text";
             cellElement.maxLength = 1;
             cellElement.dataset.row = rowIndex;
             cellElement.dataset.col = colIndex;
-            cellElement.value = cell || ""; // Preenche as células ou deixa vazias
-            cellElement.disabled = cell !== 0; // Bloqueia as células pré-preenchidas
+            cellElement.value = cell || "";
+            cellElement.disabled = cell !== 0;
 
-            // Estilização das células
             cellElement.style.width = "40px";
             cellElement.style.height = "40px";
             cellElement.style.textAlign = "center";
             cellElement.style.fontSize = "18px";
             cellElement.style.border = "1px solid #ccc";
 
-            // Adiciona ao contêiner
             container.appendChild(cellElement);
         });
     });
 }
 
+
 // 4. Adicionar Eventos
 function addEventListeners() {
     const boardContainer = document.getElementById("sudoku-board");
-    const validateButton = document.getElementById("validateButton");
+    const validateButton = document.getElementById("verifyButton");
 
     // Evento para capturar entrada do usuário
     boardContainer.addEventListener("input", (e) => {
